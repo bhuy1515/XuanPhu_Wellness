@@ -34,6 +34,18 @@
 
     @Scripts.Render("~/bundles/jquery")
     @Scripts.Render("~/bundles/bootstrap")
+    @*Load CKEditor 4 từ CDN*@
+    <script src="https://cdn.ckeditor.com/4.22.1/full/ckeditor.js"></script>
+
+    <script>
+        // Khởi tạo CKEditor 4 trên textarea có id = "editor1"
+        CKEDITOR.replace('editor1', {
+            height: 400
+            // có thể config thêm tại đây
+            // extraPlugins: 'image2',
+            // removeButtons: 'Subscript,Superscript'
+        });
+    </script>
     @RenderSection("scripts", required: false)
 </body>
 </html>

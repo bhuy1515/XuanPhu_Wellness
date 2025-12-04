@@ -1,33 +1,83 @@
 ﻿@{
-    ViewBag.Title = "Home Page";
+    ViewBag.Title = "Home Page - CKEditor 4 Static Demo";
 }
 
-<main>
-    <section class="row" aria-labelledby="aspnetTitle">
-        <h1 id="title">ASP.NET</h1>
-        <p class="lead">ASP.NET is a free web framework for building great Web sites and Web applications using HTML, CSS and JavaScript.</p>
-        <p><a href="https://asp.net" class="btn btn-primary btn-md">Learn more &raquo;</a></p>
-    </section>
+<div class="container">
+    <h2 class="text-center mb-4">Demo CKEditor 4 - Soạn thảo & Xem trước</h2>
 
     <div class="row">
-        <section class="col-md-4" aria-labelledby="gettingStartedTitle">
-            <h2 id="gettingStartedTitle">Getting started</h2>
-            <p>
-                ASP.NET MVC gives you a powerful, patterns-based way to build dynamic websites that
-                enables a clean separation of concerns and gives you full control over markup
-                for enjoyable, agile development.
-            </p>
-            <p><a class="btn btn-outline-dark" href="https://go.microsoft.com/fwlink/?LinkId=301865">Learn more &raquo;</a></p>
-        </section>
-        <section class="col-md-4" aria-labelledby="librariesTitle">
-            <h2 id="librariesTitle">Get more libraries</h2>
-            <p>NuGet is a free Visual Studio extension that makes it easy to add, remove, and update libraries and tools in Visual Studio projects.</p>
-            <p><a class="btn btn-outline-dark" href="https://go.microsoft.com/fwlink/?LinkId=301866">Learn more &raquo;</a></p>
-        </section>
-        <section class="col-md-4" aria-labelledby="hostingTitle">
-            <h2 id="hostingTitle">Web Hosting</h2>
-            <p>You can easily find a web hosting company that offers the right mix of features and price for your applications.</p>
-            <p><a class="btn btn-outline-dark" href="https://go.microsoft.com/fwlink/?LinkId=301867">Learn more &raquo;</a></p>
-        </section>
+        <!-- Cột trái: Soạn thảo + nút Đăng -->
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label class="form-label" for="editor1">Nội dung bài viết</label>
+                <!-- CKEditor 4 dùng <textarea> -->
+                <textarea name="editor1" id="editor1" rows="10" class="form-control">
+<p>Hello from CKEditor 4!</p>
+<p>This is a static demo page converted from CKEditor 5 to CKEditor 4.</p>
+<ul>
+                <li>No license key needed.</li>
+                <li>Loaded from CKEditor 4 open source CDN.</li>
+</ul>
+                </textarea>
+            </div>
+
+            <button type="button" id="btnDang" class="btn btn-primary">
+                Đăng
+            </button>
+        </div>
+
+        <!-- Cột phải: Kết quả sau khi ấn Đăng -->
+        <div class="col-md-6">
+            <h5>Kết quả hiển thị sau khi bấm "Đăng"</h5>
+            <div id="preview" class="border rounded p-2" style="min-height: 300px;">
+                <em>Nội dung sẽ hiển thị ở đây sau khi bạn bấm "Đăng".</em>
+            </div>
+        </div>
     </div>
-</main>
+</div>
+
+@section scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Make sure CKEditor 4 is available (layout should include CDN)
+            if (typeof CKEDITOR === 'undefined') {
+                console.error('CKEditor 4 not found. Ensure layout loads the CKEditor 4 script.');
+                return;
+            }
+
+            // Initialize editor if not already
+            var editorInst = CKEDITOR.instances['editor1'];
+            try {
+                if (!editorInst) {
+                    editorInst = CKEDITOR.replace('editor1', { height: 350 });
+                }
+            } catch (err) {
+                console.error('Error initializing CKEditor:', err);
+            }
+
+            // Bind Đăng button
+            var btn = document.getElementById('btnDang');
+            if (!btn) {
+                console.error('Button #btnDang not found');
+                return;
+            }
+
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                var content = '';
+
+                if (CKEDITOR.instances && CKEDITOR.instances['editor1'] && typeof CKEDITOR.instances['editor1'].getData === 'function') {
+                    content = CKEDITOR.instances['editor1'].getData();
+                } else {
+                    var ta = document.getElementById('editor1');
+                    content = ta ? ta.value : '';
+                }
+
+                var preview = document.getElementById('preview');
+                if (preview) {
+                    preview.innerHTML = content || '<em>(Nội dung trống)</em>';
+                }
+            });
+        });
+    </script>
+}

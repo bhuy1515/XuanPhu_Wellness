@@ -1,0 +1,383 @@
+﻿use Wellness_XuanPhu
+--------------------------------------------------
+-- SCHEMA DU AN XUAN PHU - WELLNESS NATURE CONNECT
+-- SQL Server - Tieng Viet khong dau
+--------------------------------------------------
+
+--------------------------------------------------
+-- TEP DA PHUONG TIEN (media_files)
+--------------------------------------------------
+CREATE TABLE tep_da_phuong_tien (
+    id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    ten_tep NVARCHAR(255) NULL,
+    duong_dan_tep NVARCHAR(MAX) NOT NULL,
+    loai_tep NVARCHAR(100) NULL,      -- image/jpeg, video/mp4...
+    chu_thich NVARCHAR(255) NULL,     -- alt_text
+    ngay_tao DATETIME2 NOT NULL DEFAULT(GETDATE()),
+    ngay_cap_nhat DATETIME2 NOT NULL DEFAULT(GETDATE())
+);
+GO
+
+--------------------------------------------------
+-- DANH MUC TRAI NGHIEM (experience_categories)
+--------------------------------------------------
+CREATE TABLE danh_muc_trai_nghiem (
+    id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    duong_dan NVARCHAR(100) NOT NULL UNIQUE,   -- slug
+    ten NVARCHAR(255) NOT NULL,
+    mo_ta NVARCHAR(MAX) NULL,
+    bieu_tuong NVARCHAR(100) NULL,
+    thu_tu INT NOT NULL DEFAULT(0)
+);
+GO
+
+--------------------------------------------------
+-- TRAI NGHIEM (experiences)
+--------------------------------------------------
+CREATE TABLE trai_nghiem (
+    id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    danh_muc_id BIGINT NULL,  -- FK -> danh_muc_trai_nghiem
+    duong_dan NVARCHAR(150) NOT NULL UNIQUE,
+    tieu_de NVARCHAR(255) NOT NULL,
+    tieu_de_phu NVARCHAR(255) NULL,
+    mo_ta NVARCHAR(MAX) NULL,
+    thoi_luong_gio DECIMAL(4,1) NULL,
+    do_kho SMALLINT NULL,                 -- 1-5
+    so_luong_nhom_toi_thieu INT NULL,
+    so_luong_nhom_toi_da INT NULL,
+    gia_co_ban DECIMAL(12,2) NULL,
+    don_vi_tien NVARCHAR(10) NOT NULL DEFAULT(N'VND'),
+    dang_hoat_dong BIT NOT NULL DEFAULT(1),
+    anh_chinh_id BIGINT NULL,             -- FK -> tep_da_phuong_tien (neu can)
+    ngay_tao DATETIME2 NOT NULL DEFAULT(GETDATE()),
+    ngay_cap_nhat DATETIME2 NOT NULL DEFAULT(GETDATE())
+);
+GO
+
+ALTER TABLE trai_nghiem
+ADD CONSTRAINT FK_trai_nghiem_danh_muc
+FOREIGN KEY (danh_muc_id) REFERENCES danh_muc_trai_nghiem(id);
+GO
+
+--------------------------------------------------
+-- MUA VU (seasons)
+--------------------------------------------------
+CREATE TABLE mua_vu (
+    id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    duong_dan NVARCHAR(100) NOT NULL UNIQUE,
+    ten NVARCHAR(255) NOT NULL,
+    mo_ta NVARCHAR(MAX) NULL,
+    thang_bat_dau TINYINT NULL,
+    thang_ket_thuc TINYINT NULL,
+    dang_hoat_dong BIT NOT NULL DEFAULT(1),
+    ngay_tao DATETIME2 NOT NULL DEFAULT(GETDATE()),
+    ngay_cap_nhat DATETIME2 NOT NULL DEFAULT(GETDATE()),
+    CONSTRAINT CK_mua_vu_thang_bat_dau CHECK (thang_bat_dau BETWEEN 1 AND 12),
+    CONSTRAINT CK_mua_vu_thang_ket_thuc CHECK (thang_ket_thuc BETWEEN 1 AND 12)
+);
+GO
+
+--------------------------------------------------
+-- TRAI NGHIEM - MUA VU (experience_seasons, N-N)
+--------------------------------------------------
+CREATE TABLE trai_nghiem_mua_vu (
+    trai_nghiem_id BIGINT NOT NULL,
+    mua_vu_id BIGINT NOT NULL,
+    CONSTRAINT PK_trai_nghiem_mua_vu PRIMARY KEY (trai_nghiem_id, mua_vu_id),
+    CONSTRAINT FK_trai_nghiem_mua_vu_trai_nghiem
+        FOREIGN KEY (trai_nghiem_id) REFERENCES trai_nghiem(id) ON DELETE CASCADE,
+    CONSTRAINT FK_trai_nghiem_mua_vu_mua_vu
+        FOREIGN KEY (mua_vu_id) REFERENCES mua_vu(id) ON DELETE CASCADE
+);
+GO
+
+--------------------------------------------------
+-- LICH TRINH (itineraries)
+--------------------------------------------------
+CREATE TABLE lich_trinh (
+    id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    duong_dan NVARCHAR(150) NOT NULL UNIQUE,
+    tieu_de NVARCHAR(255) NOT NULL,
+    tieu_de_phu NVARCHAR(255) NULL,
+    mo_ta NVARCHAR(MAX) NULL,
+    thoi_luong_ngay INT NULL,
+    doi_tuong_muc_tieu NVARCHAR(50) NULL,  -- family/friends/students/corporate
+    gia_co_ban DECIMAL(12,2) NULL,
+    dang_hoat_dong BIT NOT NULL DEFAULT(1),
+    ngay_tao DATETIME2 NOT NULL DEFAULT(GETDATE()),
+    ngay_cap_nhat DATETIME2 NOT NULL DEFAULT(GETDATE())
+);
+GO
+
+--------------------------------------------------
+-- LICH TRINH - TRAI NGHIEM (itinerary_experiences)
+--------------------------------------------------
+CREATE TABLE lich_trinh_trai_nghiem (
+    id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    lich_trinh_id BIGINT NOT NULL,
+    trai_nghiem_id BIGINT NOT NULL,
+    so_thu_tu_ngay INT NULL,
+    buoi_trong_ngay NVARCHAR(20) NULL,  -- morning/afternoon/evening
+    thu_tu INT NULL,
+    CONSTRAINT FK_lich_trinh_trai_nghiem_lich_trinh
+        FOREIGN KEY (lich_trinh_id) REFERENCES lich_trinh(id) ON DELETE CASCADE,
+    CONSTRAINT FK_lich_trinh_trai_nghiem_trai_nghiem
+        FOREIGN KEY (trai_nghiem_id) REFERENCES trai_nghiem(id) ON DELETE CASCADE
+);
+GO
+
+--------------------------------------------------
+-- CHO WELLNESS (Wellness Village Market)
+--------------------------------------------------
+CREATE TABLE cho_wellness (
+    id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    duong_dan NVARCHAR(150) NOT NULL UNIQUE,
+    tieu_de NVARCHAR(255) NOT NULL,
+    mo_ta NVARCHAR(MAX) NULL,
+    chu_de NVARCHAR(255) NULL,
+    dia_diem NVARCHAR(255) NULL,
+    thoi_gian_bat_dau DATETIME2 NULL,
+    thoi_gian_ket_thuc DATETIME2 NULL,
+    dang_hoat_dong BIT NOT NULL DEFAULT(1),
+    anh_bia_id BIGINT NULL,               -- FK -> tep_da_phuong_tien (neu can)
+    ngay_tao DATETIME2 NOT NULL DEFAULT(GETDATE()),
+    ngay_cap_nhat DATETIME2 NOT NULL DEFAULT(GETDATE())
+);
+GO
+
+--------------------------------------------------
+-- GIAN HANG CHO WELLNESS (market_vendors)
+--------------------------------------------------
+CREATE TABLE gian_hang_cho (
+    id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    cho_wellness_id BIGINT NOT NULL,
+    ten_don_vi NVARCHAR(255) NOT NULL,
+    nguoi_lien_he NVARCHAR(255) NULL,
+    email_lien_he NVARCHAR(255) NULL,
+    so_dien_thoai_lien_he NVARCHAR(50) NULL,
+    mo_ta NVARCHAR(MAX) NULL,
+    nhom_san_pham NVARCHAR(100) NULL,   -- food/craft/wellness/...
+    da_xac_nhan BIT NOT NULL DEFAULT(0),
+    ngay_tao DATETIME2 NOT NULL DEFAULT(GETDATE()),
+    ngay_cap_nhat DATETIME2 NOT NULL DEFAULT(GETDATE()),
+    CONSTRAINT FK_gian_hang_cho_cho
+        FOREIGN KEY (cho_wellness_id) REFERENCES cho_wellness(id) ON DELETE CASCADE
+);
+GO
+
+--------------------------------------------------
+-- CHUONG TRINH GIAO DUC (education_programs)
+--------------------------------------------------
+CREATE TABLE chuong_trinh_giao_duc (
+    id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    duong_dan NVARCHAR(150) NOT NULL UNIQUE,
+    tieu_de NVARCHAR(255) NOT NULL,
+    tieu_de_phu NVARCHAR(255) NULL,
+    mo_ta NVARCHAR(MAX) NULL,
+    doi_tuong_muc_tieu NVARCHAR(50) NULL,   -- university/corporate/...
+    thoi_luong_ngay INT NULL,
+    so_luong_toi_da INT NULL,
+    gia_co_ban DECIMAL(12,2) NULL,
+    ket_qua_ky_vong NVARCHAR(MAX) NULL,
+    dang_hoat_dong BIT NOT NULL DEFAULT(1),
+    ngay_tao DATETIME2 NOT NULL DEFAULT(GETDATE()),
+    ngay_cap_nhat DATETIME2 NOT NULL DEFAULT(GETDATE())
+);
+GO
+
+--------------------------------------------------
+-- DU AN DAU TU (investment_projects)
+--------------------------------------------------
+CREATE TABLE du_an_dau_tu (
+    id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    duong_dan NVARCHAR(150) NOT NULL UNIQUE,
+    ten_du_an NVARCHAR(255) NOT NULL,
+    mo_ta_ngan NVARCHAR(MAX) NULL,
+    mo_ta_chi_tiet NVARCHAR(MAX) NULL,
+    loai_du_an NVARCHAR(50) NULL,   -- wellness_home/retreat/farmstay/...
+    von_dau_tu_toi_thieu DECIMAL(14,2) NULL,
+    von_dau_tu_toi_da DECIMAL(14,2) NULL,
+    tom_tat_hieu_qua NVARCHAR(MAX) NULL,   -- ROI summary
+    tinh_trang_phap_ly NVARCHAR(MAX) NULL,
+    vi_tri NVARCHAR(255) NULL,
+    trang_thai NVARCHAR(50) NULL,          -- open/in_progress/completed
+    dang_hoat_dong BIT NOT NULL DEFAULT(1),
+    ngay_tao DATETIME2 NOT NULL DEFAULT(GETDATE()),
+    ngay_cap_nhat DATETIME2 NOT NULL DEFAULT(GETDATE())
+);
+GO
+
+--------------------------------------------------
+-- NGUOI DUNG (users)
+--------------------------------------------------
+CREATE TABLE nguoi_dung (
+    id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    email NVARCHAR(255) NOT NULL UNIQUE,
+    mat_khau_ma_hoa NVARCHAR(255) NOT NULL,
+    ho_ten NVARCHAR(255) NULL,
+    dang_hoat_dong BIT NOT NULL DEFAULT(1),
+    ngay_tao DATETIME2 NOT NULL DEFAULT(GETDATE()),
+    ngay_cap_nhat DATETIME2 NOT NULL DEFAULT(GETDATE())
+);
+GO
+
+--------------------------------------------------
+-- VAI TRO (roles)
+--------------------------------------------------
+CREATE TABLE vai_tro (
+    id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    ten NVARCHAR(50) NOT NULL UNIQUE,
+    mo_ta NVARCHAR(MAX) NULL
+);
+GO
+
+--------------------------------------------------
+-- NGUOI DUNG - VAI TRO (user_roles)
+--------------------------------------------------
+CREATE TABLE nguoi_dung_vai_tro (
+    nguoi_dung_id BIGINT NOT NULL,
+    vai_tro_id BIGINT NOT NULL,
+    CONSTRAINT PK_nguoi_dung_vai_tro PRIMARY KEY (nguoi_dung_id, vai_tro_id),
+    CONSTRAINT FK_nd_vt_nguoi_dung
+        FOREIGN KEY (nguoi_dung_id) REFERENCES nguoi_dung(id) ON DELETE CASCADE,
+    CONSTRAINT FK_nd_vt_vai_tro
+        FOREIGN KEY (vai_tro_id) REFERENCES vai_tro(id) ON DELETE CASCADE
+);
+GO
+
+--------------------------------------------------
+-- BAI VIET BLOG (blog_posts)
+--------------------------------------------------
+CREATE TABLE bai_viet_blog (
+    id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    duong_dan NVARCHAR(150) NOT NULL UNIQUE,
+    tieu_de NVARCHAR(255) NOT NULL,
+    tom_tat NVARCHAR(MAX) NULL,
+    noi_dung NVARCHAR(MAX) NULL,
+    tac_gia_id BIGINT NULL,           -- FK -> nguoi_dung
+    thoi_gian_dang DATETIME2 NULL,
+    trang_thai NVARCHAR(50) NOT NULL DEFAULT(N'draft'),
+    anh_bia_id BIGINT NULL,           -- FK -> tep_da_phuong_tien
+    ngay_tao DATETIME2 NOT NULL DEFAULT(GETDATE()),
+    ngay_cap_nhat DATETIME2 NOT NULL DEFAULT(GETDATE()),
+    CONSTRAINT FK_bai_viet_tac_gia
+        FOREIGN KEY (tac_gia_id) REFERENCES nguoi_dung(id),
+    CONSTRAINT FK_bai_viet_anh_bia
+        FOREIGN KEY (anh_bia_id) REFERENCES tep_da_phuong_tien(id)
+);
+GO
+
+--------------------------------------------------
+-- SU KIEN (events)
+--------------------------------------------------
+CREATE TABLE su_kien (
+    id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    duong_dan NVARCHAR(150) NOT NULL UNIQUE,
+    tieu_de NVARCHAR(255) NOT NULL,
+    tieu_de_phu NVARCHAR(255) NULL,
+    mo_ta NVARCHAR(MAX) NULL,
+    loai_su_kien NVARCHAR(50) NULL,       -- festival/workshop/retreat/...
+    dia_diem NVARCHAR(255) NULL,
+    thoi_gian_bat_dau DATETIME2 NULL,
+    thoi_gian_ket_thuc DATETIME2 NULL,
+    hien_thi_cong_khai BIT NOT NULL DEFAULT(1),
+    trang_thai NVARCHAR(50) NULL,         -- upcoming/past/cancelled
+    anh_bia_id BIGINT NULL,               -- FK -> tep_da_phuong_tien
+    ngay_tao DATETIME2 NOT NULL DEFAULT(GETDATE()),
+    ngay_cap_nhat DATETIME2 NOT NULL DEFAULT(GETDATE()),
+    CONSTRAINT FK_su_kien_anh_bia
+        FOREIGN KEY (anh_bia_id) REFERENCES tep_da_phuong_tien(id)
+);
+GO
+
+--------------------------------------------------
+-- YEU CAU LIEN HE (contact_requests / leads)
+--------------------------------------------------
+CREATE TABLE yeu_cau_lien_he (
+    id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    ho_ten NVARCHAR(255) NOT NULL,
+    email NVARCHAR(255) NULL,
+    so_dien_thoai NVARCHAR(50) NULL,
+    loai_khach NVARCHAR(50) NULL,   -- du_khach/nha_dau_tu/truong/doanh_nghiep/...
+    muc_dich NVARCHAR(50) NULL,     -- dat_trai_nghiem/dau_tu/giao_duc/cho_wellness/...
+    noi_dung NVARCHAR(MAX) NULL,
+    trang_nguon NVARCHAR(MAX) NULL, -- URL gọi form
+    trai_nghiem_id BIGINT NULL,
+    lich_trinh_id BIGINT NULL,
+    du_an_dau_tu_id BIGINT NULL,
+    trang_thai NVARCHAR(50) NOT NULL DEFAULT(N'moi'),
+    ngay_tao DATETIME2 NOT NULL DEFAULT(GETDATE()),
+    ngay_cap_nhat DATETIME2 NOT NULL DEFAULT(GETDATE()),
+    CONSTRAINT FK_yeu_cau_trai_nghiem
+        FOREIGN KEY (trai_nghiem_id) REFERENCES trai_nghiem(id),
+    CONSTRAINT FK_yeu_cau_lich_trinh
+        FOREIGN KEY (lich_trinh_id) REFERENCES lich_trinh(id),
+    CONSTRAINT FK_yeu_cau_du_an_dau_tu
+        FOREIGN KEY (du_an_dau_tu_id) REFERENCES du_an_dau_tu(id)
+);
+GO
+
+--------------------------------------------------
+-- MENU DONG - DINH NGHIA CAC MENU (HEADER, FOOTER...)
+--------------------------------------------------
+CREATE TABLE menu_dong (
+    id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    ma_menu NVARCHAR(50) NOT NULL UNIQUE,      -- vi du: HEADER_MAIN, FOOTER_MAIN
+    ten NVARCHAR(255) NOT NULL,                -- ten menu de doc trong admin
+    mo_ta NVARCHAR(MAX) NULL,
+    vi_tri NVARCHAR(50) NULL,                  -- header/footer/sidebar/...
+    dang_hoat_dong BIT NOT NULL DEFAULT(1),
+    ngay_tao DATETIME2 NOT NULL DEFAULT(GETDATE()),
+    ngay_cap_nhat DATETIME2 NOT NULL DEFAULT(GETDATE())
+);
+GO
+
+--------------------------------------------------
+-- MUC MENU - CAC ITEM TRONG MENU
+--------------------------------------------------
+CREATE TABLE muc_menu (
+    id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    menu_id BIGINT NOT NULL,                   -- FK -> menu_dong
+    muc_cha_id BIGINT NULL,                    -- self FK -> muc_menu, de tao menu nhieu cap
+    
+    ten_hien_thi NVARCHAR(255) NOT NULL,       -- text hien thi tren giao dien
+    duong_dan NVARCHAR(500) NULL,              -- URL /gioi-thieu, /trai-nghiem, ...
+
+    -- Tùy chọn: lien ket den noi dung trong he thong
+    loai_lien_ket NVARCHAR(50) NULL,           -- duong_dan_tu_do/trai_nghiem/bai_viet_blog/...
+    bang_dich_vu NVARCHAR(100) NULL,           -- vi du: 'trai_nghiem', 'bai_viet_blog'
+    id_dich_vu BIGINT NULL,                    -- id ban ghi trong bang dich vu tuong ung
+
+    bieu_tuong NVARCHAR(100) NULL,             -- icon neu dung
+    thu_tu INT NOT NULL DEFAULT(0),            -- thu tu sap xep
+    hien_thi BIT NOT NULL DEFAULT(1),          -- 1: hien, 0: an
+    chi_cho_khach_dang_nhap BIT NOT NULL DEFAULT(0),  -- 1: chi hien khi user da login
+
+    ngay_tao DATETIME2 NOT NULL DEFAULT(GETDATE()),
+    ngay_cap_nhat DATETIME2 NOT NULL DEFAULT(GETDATE())
+);
+GO
+
+ALTER TABLE muc_menu
+ADD CONSTRAINT FK_muc_menu_menu
+FOREIGN KEY (menu_id) REFERENCES menu_dong(id);
+GO
+
+ALTER TABLE muc_menu
+ADD CONSTRAINT FK_muc_menu_muc_cha
+FOREIGN KEY (muc_cha_id) REFERENCES muc_menu(id);
+GO
+
+--------------------------------------------------
+-- MUC MENU - VAI TRO (PHAN QUYEN HIEN THI THEO ROLE)
+--------------------------------------------------
+CREATE TABLE muc_menu_vai_tro (
+    muc_menu_id BIGINT NOT NULL,
+    vai_tro_id BIGINT NOT NULL,
+    CONSTRAINT PK_muc_menu_vai_tro PRIMARY KEY (muc_menu_id, vai_tro_id),
+    CONSTRAINT FK_muc_menu_vai_tro_muc_menu
+        FOREIGN KEY (muc_menu_id) REFERENCES muc_menu(id) ON DELETE CASCADE,
+    CONSTRAINT FK_muc_menu_vai_tro_vai_tro
+        FOREIGN KEY (vai_tro_id) REFERENCES vai_tro(id) ON DELETE CASCADE
+);
+GO
